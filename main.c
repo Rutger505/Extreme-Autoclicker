@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <linux/uinput.h>
-#include <fcntl.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <libevdev-1.0/libevdev/libevdev-uinput.h>
 #include <time.h>
+#include <gtk/gtk.h>
 
 int main(void) {
     struct libevdev *vdev = NULL;
