@@ -6,50 +6,68 @@
 #include <fcntl.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <libevdev-1.0/libevdev/libevdev-uinput.h>
-#include <errno.h>
+#include <time.h>
 
-int main(void)
-{
-    struct libevdev *dev = NULL;
+int main(void) {
+    struct libevdev *vdev = NULL;
+    struct libevdev_uinput *uidev = NULL;
 
-    int fd = open("/dev/input/event6", O_RDONLY | O_NONBLOCK);
-    int rc = libevdev_new_from_fd(fd, &dev);
-    if (rc < 0) {
-        fprintf(stderr, "Failed to init libevdev (%s)\n", strerror(-rc));
+
+    vdev = libevdev_new();
+    if (!vdev) {
+        fprintf(stderr, "Failed to create virtual device\n");
         exit(1);
     }
 
-    printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
+    libevdev_set_name(vdev, "Extreme Autoclicker");
+    libevdev_set_id_bustype(vdev, BUS_USB);
 
-    printf("Input device ID: bus %#x vendor %#x product %#x\n",
-           libevdev_get_id_bustype(dev),
-           libevdev_get_id_vendor(dev),
-           libevdev_get_id_product(dev));
-    printf("Evdev version: %x\n", libevdev_get_driver_version(dev));
-    printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
-    printf("Phys location: %s\n", libevdev_get_phys(dev));
-    printf("Uniq identifier: %s\n", libevdev_get_uniq(dev));
+    libevdev_set_id_vendor(vdev, 0x1234);
+    libevdev_set_id_product(vdev, 0x5678);
 
+    libevdev_enable_event_type(vdev, EV_KEY);
+    libevdev_enable_event_code(vdev, EV_KEY, BTN_LEFT, NULL);
+    libevdev_enable_event_code(vdev, EV_KEY, BTN_RIGHT, NULL);
+    libevdev_enable_event_code(vdev, EV_KEY, BTN_MIDDLE, NULL);
 
-    if (!libevdev_has_event_type(dev, EV_REL) ||
-        !libevdev_has_event_code(dev, EV_KEY, BTN_LEFT)) {
-        printf("This device does not look like a mouse\n");
+    libevdev_enable_event_type(vdev, EV_REL);
+    libevdev_enable_event_code(vdev, EV_REL, REL_X, NULL);
+    libevdev_enable_event_code(vdev, EV_REL, REL_Y, NULL);
+
+    libevdev_enable_event_type(vdev, EV_SYN);
+
+    const int rc = libevdev_uinput_create_from_device(vdev, LIBEVDEV_UINPUT_OPEN_MANAGED, &uidev);
+    if (rc != 0) {
+        fprintf(stderr, "Failed to create uinput device (%s)\n", strerror(-rc));
         exit(1);
     }
 
-    for (int i = 0; i < 10; i++) {
-        struct input_event ev;
-        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
-        if (rc != 0) {
-            printf("Error getting event %d (%s)", rc, strerror(rc));
-            continue;
-        }
+    printf("Virtual Mouse Device Created: Extreme Autoclicker\n");
+    printf("Move your mouse and autoclicker will send clicks\n");
+    printf("Press Ctrl+C to stop\n\n");
 
-        printf("Event: %s %s %d\n",
-               libevdev_event_type_get_name(ev.type),
-               libevdev_event_code_get_name(ev.type, ev.code),
-               ev.value);
+
+    for (int i = 0; i < 10000; i++) {
+        printf("Sending automatic left mouse click...\n");
+
+        // Press
+        libevdev_uinput_write_event(uidev, EV_KEY, BTN_LEFT, 1);
+        libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+
+        usleep(50000);
+
+        // Release
+        libevdev_uinput_write_event(uidev, EV_KEY, BTN_LEFT, 0);
+        libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+
+        usleep(50000);
+
+
+        printf("  -> Click sent\n");
     }
 
+    libevdev_uinput_destroy(uidev);
+    libevdev_free(vdev);
     return 0;
 }
+
