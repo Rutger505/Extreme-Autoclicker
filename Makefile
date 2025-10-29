@@ -1,3 +1,5 @@
+all: bin/extreme-autoclicker
+
 bin/extreme-autoclicker:
 	mkdir -p bin
 	gcc \
@@ -8,12 +10,6 @@ bin/extreme-autoclicker:
 		src/main.c \
 		src/pointer.c \
 		$(shell pkg-config --libs gtk4 libevdev)
-
-all: bin/extreme-autoclicker
-
-clean:
-	rm -rf bin
-all: bin/extreme-autoclicker
 
 clean:
 	rm -rf bin
