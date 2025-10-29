@@ -1,6 +1,11 @@
 bin/extreme-autoclicker: main.c
 	mkdir -p bin
-	gcc -g -Wall -o bin/extreme-autoclicker main.c $(shell pkg-config --cflags --libs libevdev gtk4)
+	gcc $(shell pkg-config --cflags gtk4 )\
+		-g \
+		-Wall \
+		-o bin/extreme-autoclicker \
+		main.c \
+		$(shell pkg-config --libs libevdev gtk4)
 
 all: bin/extreme-autoclicker
 
