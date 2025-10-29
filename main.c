@@ -12,7 +12,7 @@ int main(void)
 {
     struct libevdev *dev = NULL;
 
-    int fd = open("/dev/input/event31", O_RDONLY | O_NONBLOCK);
+    int fd = open("/dev/input/event6", O_RDONLY | O_NONBLOCK);
     int rc = libevdev_new_from_fd(fd, &dev);
     if (rc < 0) {
         fprintf(stderr, "Failed to init libevdev (%s)\n", strerror(-rc));
@@ -40,8 +40,10 @@ int main(void)
     for (int i = 0; i < 10; i++) {
         struct input_event ev;
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
-        if (rc != 0)
+        if (rc != 0) {
+            printf("Error getting event %d (%s)", rc, strerror(rc));
             continue;
+        }
 
         printf("Event: %s %s %d\n",
                libevdev_event_type_get_name(ev.type),
