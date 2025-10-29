@@ -1,155 +1,53 @@
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdlib.h>
 #include <stdio.h>
-
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <linux/uinput.h>
+#include <fcntl.h>
+#include <libevdev-1.0/libevdev/libevdev.h>
+#include <libevdev-1.0/libevdev/libevdev-uinput.h>
+#include <errno.h>
 
-#include <X11/Xlib.h>
+int main(void)
+{
+    struct libevdev *dev = NULL;
 
-
-int fd;
-Display *dpy;
-
-void initMouse();
-
-void destroyMouse();
-
-void mouseLeftClick();
-
-void mouseRightClick();
-
-void mouseGetPosition(int *x, int *y);
-
-void mouseMove(int xdelta, int ydelta);
-
-void initMouse() {
-    fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT);
-    ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
-    ioctl(fd, UI_SET_EVBIT, EV_ABS);
-    ioctl(fd, UI_SET_ABSBIT, ABS_X);
-    ioctl(fd, UI_SET_ABSBIT, ABS_Y);
-    ioctl(fd, UI_SET_EVBIT, EV_REL);
-
-    struct uinput_user_dev uidev = {0};
-    snprintf(uidev.name,UINPUT_MAX_NAME_SIZE, "VirtualMouse");
-    uidev.id.bustype = BUS_USB;
-    uidev.id.version = 1;
-    uidev.id.vendor = 0x1;
-    uidev.id.product = 0x1;
-    uidev.absmin[ABS_X] = 0;
-    uidev.absmax[ABS_X] = 3200;
-    uidev.absmin[ABS_Y] = 0;
-    uidev.absmax[ABS_Y] = 900;
-
-    write(fd, &uidev, sizeof(uidev));
-    ioctl(fd, UI_DEV_CREATE);
-
-    sleep(2);
-}
-
-void mouseLeftClick() {
-    struct input_event ev_click = {0};
-    struct input_event ev_sync = {0};
-
-    ev_click.type = EV_KEY;
-    ev_click.code = BTN_LEFT;
-    ev_click.value = 1;
-
-    //write left click event
-    write(fd, &ev_click, sizeof(ev_click));
-
-    //sync left click event
-    ev_sync.type = EV_SYN;
-    write(fd, &ev_sync, sizeof(ev_sync));
-}
-
-void mouseRightClick() {
-    struct input_event ev_click = {0};
-    struct input_event ev_sync = {0};
-
-    ev_click.type = EV_KEY;
-    ev_click.code = BTN_RIGHT;
-    ev_click.value = 1;
-
-    //write right click event
-    write(fd, &ev_click, sizeof(ev_click));
-
-    //sync right click event
-    ev_sync.type = EV_SYN;
-    write(fd, &ev_sync, sizeof(ev_sync));
-}
-
-void mouseSetPosition(const int x, const int y) {
-    struct input_event ev[2] = {0, 0};
-    struct input_event ev_sync = {0};
-
-    ev[0].type = EV_ABS;
-    ev[0].code = ABS_X;
-    ev[0].value = x;
-    ev[1].type = EV_ABS;
-    ev[1].code = ABS_Y;
-    ev[1].value = y;
-
-
-    int res_w = write(fd, ev, sizeof(ev));
-
-    printf("res w : %d\n", res_w);
-
-    ev_sync.type = EV_SYN;
-    ev_sync.value = 0;
-    ev_sync.code = 0;
-    int res_ev_sync = write(fd, &ev_sync, sizeof(ev_sync));
-
-    printf("res syn : %d\n", res_ev_sync);
-}
-
-void initDisplay() {
-    dpy = XOpenDisplay(NULL);
-}
-
-void destroyMouse() {
-    ioctl(fd, UI_DEV_DESTROY);
-}
-
-void mouseMove(int xdelta, int ydelta) {
-    int x = 0;
-    int y = 0;
-    mouseGetPosition(&x, &y);
-
-    printf("Mouse x: %d, y %d", x, y);
-
-    mouseSetPosition(x + xdelta, y + ydelta);
-}
-
-void mouseGetPosition(int *x, int *y) {
-    Window root, child;
-    int rootX, rootY, winX, winY;
-    unsigned int mask;
-
-    XQueryPointer(dpy,DefaultRootWindow(dpy), &root, &child,
-                  &rootX, &rootY, &winX, &winY, &mask);
-
-
-    printf("root x : %d\n", rootX);
-    printf("root y : %d\n", rootY);
-
-    *x = rootX;
-    *y = rootY;
-}
-
-int main() {
-    initMouse();
-    initDisplay();
-
-    for (int i = 0; i < 5; ++i) {
-        mouseMove(100 + 50 * i, 100 - 50 * i);
-        sleep(1);
-        printf("i: %d\n", i);
+    int fd = open("/dev/input/event31", O_RDONLY | O_NONBLOCK);
+    int rc = libevdev_new_from_fd(fd, &dev);
+    if (rc < 0) {
+        fprintf(stderr, "Failed to init libevdev (%s)\n", strerror(-rc));
+        exit(1);
     }
 
-    destroyMouse();
+    printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
+
+    printf("Input device ID: bus %#x vendor %#x product %#x\n",
+           libevdev_get_id_bustype(dev),
+           libevdev_get_id_vendor(dev),
+           libevdev_get_id_product(dev));
+    printf("Evdev version: %x\n", libevdev_get_driver_version(dev));
+    printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
+    printf("Phys location: %s\n", libevdev_get_phys(dev));
+    printf("Uniq identifier: %s\n", libevdev_get_uniq(dev));
+
+
+    if (!libevdev_has_event_type(dev, EV_REL) ||
+        !libevdev_has_event_code(dev, EV_KEY, BTN_LEFT)) {
+        printf("This device does not look like a mouse\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < 10; i++) {
+        struct input_event ev;
+        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
+        if (rc != 0)
+            continue;
+
+        printf("Event: %s %s %d\n",
+               libevdev_event_type_get_name(ev.type),
+               libevdev_event_code_get_name(ev.type, ev.code),
+               ev.value);
+    }
+
     return 0;
 }
