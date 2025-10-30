@@ -1,6 +1,6 @@
 all: bin/extreme-autoclicker
 
-bin/extreme-autoclicker:
+bin/extreme-autoclicker: src/main.c src/pointer.c src/gui.c
 	mkdir -p bin
 	gcc \
 		$(shell pkg-config --cflags gtk4 libevdev) \
