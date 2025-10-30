@@ -1,11 +1,11 @@
 #include <stdio.h>
-#include <gtk/gtk.h>
+
 #include "../include/types.h"
 #include "../include/pointer.h"
 #include "../include/gui.h"
 
 static void print_settings(PointerSettings settings) {
-    g_print("Updated settings\n");
+    printf("Updated settings\n");
 }
 
 
