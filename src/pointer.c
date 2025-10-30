@@ -47,7 +47,7 @@ void pointer_init() {
 
 void pointer_start() {
     // todo make seperate thread for this:
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1; i++) {
         printf("sending automatic left mouse click...\n");
 
         // press
