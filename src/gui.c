@@ -10,25 +10,26 @@ void print_hello() {
 
 static void activate(GtkApplication *app,
                      gpointer user_data) {
-    GtkWidget *window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "Window");
+    GtkBuilder *builder = gtk_builder_new();
+    gtk_builder_add_from_file(builder, "builder.ui", NULL);
 
-    GtkWidget *grid = gtk_grid_new();
-    gtk_window_set_child(GTK_WINDOW(window), grid);
+    /* Connect signal handlers to the constructed widgets. */
+    GObject *window = gtk_builder_get_object(builder, "window");
+    gtk_window_set_application(GTK_WINDOW(window), app);
 
-    GtkWidget *button = gtk_button_new_with_label("Button 1");
+    GObject *button = gtk_builder_get_object(builder, "button1");
     g_signal_connect(button, "clicked", G_CALLBACK (print_hello), NULL);
-    gtk_grid_attach(GTK_GRID(grid), button, 0, 0, 1, 1);
 
-    button = gtk_button_new_with_label("Button 2");
+    button = gtk_builder_get_object(builder, "button2");
     g_signal_connect(button, "clicked", G_CALLBACK (print_hello), NULL);
-    gtk_grid_attach(GTK_GRID(grid), button, 1, 0, 1, 1);
 
-    button = gtk_button_new_with_label("Quit");
+    button = gtk_builder_get_object(builder, "quit");
     g_signal_connect_swapped(button, "clicked", G_CALLBACK (gtk_window_destroy), window);
-    gtk_grid_attach(GTK_GRID(grid), button, 0, 1, 2, 1);
 
-    gtk_window_present(GTK_WINDOW(window));
+    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+
+    /* We do not need the builder any more */
+    g_object_unref(builder);
 }
 
 void gui_init() {
