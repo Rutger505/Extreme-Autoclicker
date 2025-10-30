@@ -9,6 +9,7 @@ bin/extreme-autoclicker:
 		-o bin/extreme-autoclicker \
 		src/main.c \
 		src/pointer.c \
+		src/gui.c \
 		$(shell pkg-config --libs gtk4 libevdev)
 
 clean:

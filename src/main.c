@@ -5,6 +5,7 @@
 #include <time.h>
 #include <gtk/gtk.h>
 #include "../include/pointer.h"
+#include "../include/gui.h"
 
 static void print_hello(GtkWidget *widget,
                         gpointer data) {
