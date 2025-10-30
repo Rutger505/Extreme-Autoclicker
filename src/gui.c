@@ -4,6 +4,9 @@
 
 GtkApplication *app;
 
+void print_hello() {
+    printf("Hello World!\n");
+}
 
 static void activate(GtkApplication *app,
                      gpointer user_data) {
@@ -54,7 +57,7 @@ void gui_init() {
 }
 
 void gui_attach_update_settings_callback(UpdateSettingsCallback callback) {
-    printf("Not implemented!!");
+    printf("Not implemented!!\n");
 }
 
 int gui_start(int argc,
