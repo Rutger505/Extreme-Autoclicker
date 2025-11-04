@@ -10,26 +10,11 @@ void print_hello() {
 
 static void activate(GtkApplication *app,
                      gpointer user_data) {
-    GtkBuilder *builder = gtk_builder_new();
-    gtk_builder_add_from_file(builder, "builder.ui", NULL);
-
-    /* Connect signal handlers to the constructed widgets. */
-    GObject *window = gtk_builder_get_object(builder, "window");
-    gtk_window_set_application(GTK_WINDOW(window), app);
-
-    GObject *button = gtk_builder_get_object(builder, "button1");
-    g_signal_connect(button, "clicked", G_CALLBACK (print_hello), NULL);
-
-    button = gtk_builder_get_object(builder, "button2");
-    g_signal_connect(button, "clicked", G_CALLBACK (print_hello), NULL);
-
-    button = gtk_builder_get_object(builder, "quit");
-    g_signal_connect_swapped(button, "clicked", G_CALLBACK (gtk_window_destroy), window);
-
-    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
-
-    /* We do not need the builder any more */
-    g_object_unref(builder);
+    GtkWidget *window;
+    window = gtk_application_window_new(app);
+    gtk_window_set_title(GTK_WINDOW(window), "Extreme-Autoclicker");
+    gtk_window_set_default_size(GTK_WINDOW(window), 200, 200);
+    gtk_window_present(GTK_WINDOW(window));
 }
 
 void gui_init() {
